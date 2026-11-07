@@ -37,3 +37,13 @@ Public browser console errors after update: none. An additional screenshot of th
 - The generated Bun Function is 96197 bytes, below its 98304-byte limit. The Function adapter check includes the configured Pages origin and passed.
 - Backend deployment c60c9cfc-ce7b-4ade-9595-726b19e8110a succeeded. The public API returned HTTP 204 to the GitHub Pages POST preflight. No live order records or database schema were changed.
 - Pages publication and browser migration verification are pending.
+
+## GitHub publication completed - 2026-11-07
+- Full source is published at https://github.com/amirehsanijam/amirehsanijam.github.io and the frontend at https://amirehsanijam.github.io/.
+- GitHub Actions run 42351967390 passed the clean install, production build, all 15 tests, artifact upload and Pages deployment. The legacy branch publisher was replaced by the GitHub Actions source. The final public HTML contains the built inline app and no `/src/main.jsx` entry.
+- Live GitHub Pages browser: created a separate temporary order, edited its quantity to two and note, verified 234000 toman, then deleted it through the confirmation dialog. Browser warnings and errors: none.
+- Both pre-existing active orders exactly matched their fresh pre-test snapshot after cleanup. The temporary test order is absent. Snapshots stay outside the repository and source archive.
+- Local browser test across ports 4173 and 4174: created an order on the old origin, transferred private access through the visible button, verified the fragment was cleared, edited quantity and note on the new origin, and deleted the test order.
+- Railway deployment 10da6fd7-e0e9-4187-ba00-903b05acfa67 succeeded with the canonical Pages URL in the transfer banner. The old public site's transfer button was verified to reach the new public GitHub address. Persistent storage and the existing database schema were retained.
+- Generated Function: 96497 bytes, below 98304 bytes. Function adapter checks including Pages CORS passed.
+- A final live frontend screenshot is in outputs/github-pages-preview.png in the task workspace.

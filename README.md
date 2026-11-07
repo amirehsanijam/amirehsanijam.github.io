@@ -49,7 +49,7 @@ Build-time frontend settings:
 
 ## Existing orders and private access
 
-Browser storage belongs to each website origin. After the new site is live, rebuild the Railway page with `VITE_PUBLIC_SITE_URL` set to the Pages URL. A visible button opens the new site and transfers only the current browser's active owned-order keys through the URL fragment. The new site imports them and immediately removes the fragment. The keys are never added to query parameters or the shared order API response. Private links copied on the old site also point to the new address.
+Browser storage belongs to each website origin. The Railway page is built with `VITE_PUBLIC_SITE_URL=https://amirehsanijam.github.io/`. Its visible transfer button opens the new site and transfers only the current browser's active owned-order keys through the URL fragment. The new site imports them and immediately removes the fragment. The keys are never added to query parameters or the shared order API response. Private links copied on the old site also point to the new address.
 
 Keep private management links to yourself. Names and order contents are visible to people with the group link; management keys authorize edits and deletion. Visitors without a key cannot change that order.
 

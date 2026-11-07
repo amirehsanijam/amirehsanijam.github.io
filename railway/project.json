@@ -8,6 +8,8 @@
   "runtime": "bun:1.4.4",
   "initialDeploymentId": "0d81e9bf-6065-46d9-be6a-0dcae42de6e9",
   "verificationDeploymentId": "6fda351a-d8eb-4c9b-b299-b730e8d23ee1",
-  "latestDeploymentId": "c60c9cfc-ce7b-4ade-9595-726b19e8110a",
-  "pagesOrigin": "https://amirehsanijam.github.io"
+  "latestDeploymentId": "10da6fd7-e0e9-4187-ba00-903b05acfa67",
+  "pagesOrigin": "https://amirehsanijam.github.io",
+  "pagesUrl": "https://amirehsanijam.github.io/",
+  "repositoryUrl": "https://github.com/amirehsanijam/amirehsanijam.github.io"
 }
