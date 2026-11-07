@@ -1,0 +1,13 @@
+{
+  "projectId": "6b4b00f9-177b-4fa4-a796-3afc1cc08794",
+  "environmentId": "acc097e6-0be1-4e0c-a199-58c923daf943",
+  "serviceId": "56c0b6b9-17f5-4bc0-84d8-0d421a760408",
+  "volumeId": "afaf2ca7-0fcc-4a82-a6bd-5cf7f0c245fc",
+  "mountPath": "/data",
+  "url": "https://bonice-group-production.up.railway.app",
+  "runtime": "bun:1.4.4",
+  "initialDeploymentId": "0d81e9bf-6065-46d9-be6a-0dcae42de6e9",
+  "verificationDeploymentId": "6fda351a-d8eb-4c9b-b299-b730e8d23ee1",
+  "latestDeploymentId": "c60c9cfc-ce7b-4ade-9595-726b19e8110a",
+  "pagesOrigin": "https://amirehsanijam.github.io"
+}

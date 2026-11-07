@@ -1,0 +1,11 @@
+import{readFileSync,writeFileSync,mkdirSync}from'node:fs';import{join}from'node:path';import{pathToFileURL}from'node:url';import assert from'node:assert/strict';
+const dir=join(process.cwd(),'.sites-runtime/function-check');mkdirSync(dir,{recursive:true});
+const source=readFileSync('railway/function.ts','utf8').replace("import { Database } from 'bun:sqlite';","import { DatabaseSync } from 'node:sqlite';class Database extends DatabaseSync{query(sql){return this.prepare(sql)}}");
+const file=join(dir,'function.mjs');writeFileSync(file,source);globalThis.Bun={env:{ORDER_DATA_DIRECTORY:dir,ALLOWED_ORIGINS:'https://pages.example'}};const app=(await import(pathToFileURL(file))).default;
+let r=await app.fetch(new Request('https://test.example/'));assert.equal(r.status,200);assert.ok((await r.text()).includes('<html lang="fa"'));
+const menu=JSON.parse(readFileSync('src/menu.json','utf8'));const id=crypto.randomUUID(),token='c'.repeat(64),body={id,token,name:'بررسی انتشار',note:'آزمایشی',items:[{id:menu.items[0].id,quantity:2}]};
+r=await app.fetch(new Request('http://test.example/api/orders',{method:'POST',headers:{'content-type':'application/json',origin:'https://test.example','x-forwarded-proto':'https'},body:JSON.stringify(body)}));assert.equal(r.status,200,await r.text());
+r=await app.fetch(new Request('https://test.example/api/orders'));assert.ok((await r.json()).orders.some(o=>o.id===id&&o.total===menu.items[0].price*2));
+r=await app.fetch(new Request('https://test.example/api/orders/'+id,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({token})}));assert.equal(r.status,200);
+const preflight=await app.fetch(new Request('https://test.example/api/orders',{method:'OPTIONS',headers:{origin:'https://pages.example','access-control-request-method':'POST','access-control-request-headers':'content-type'}}));assert.equal(preflight.status,204);assert.equal(preflight.headers.get('access-control-allow-origin'),'https://pages.example');
+console.log('Function adapter: HTML, HTTPS forwarding, shared persistence, cancellation and configured Pages CORS passed');
