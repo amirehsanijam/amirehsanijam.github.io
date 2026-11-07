@@ -4,7 +4,11 @@ A responsive Persian group-order page for Bonice (Jordan / Elahiyeh). It include
 
 ## Hosting
 
-The complete application source belongs in this GitHub repository. GitHub Pages hosts the frontend. Shared orders remain in the existing Railway service, using SQLite on a persistent `/data` volume. GitHub Pages is static hosting and cannot run the order API or a writable shared database.
+Website: https://amirehsanijam.github.io/
+
+Complete source: https://github.com/amirehsanijam/amirehsanijam.github.io
+
+GitHub Pages hosts the frontend. Shared orders remain in the existing Railway service, using SQLite on a persistent `/data` volume. GitHub Pages is static hosting and cannot run the order API or a writable shared database.
 
 Existing backend: https://bonice-group-production.up.railway.app
 
