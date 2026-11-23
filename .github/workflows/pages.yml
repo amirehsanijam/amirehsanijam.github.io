@@ -31,7 +31,7 @@ jobs:
         run: npm run build
         env:
           VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
-          VITE_API_BASE_URL: ${{ vars.API_BASE_URL || 'https://bonice-group-production.up.railway.app' }}
+          VITE_API_BASE_URL: ${{ vars.API_BASE_URL || 'https://bonice-order-gateway.onrender.com' }}
       - run: npm test
       - name: Upload website
         uses: actions/upload-pages-artifact@v4

@@ -8,7 +8,7 @@ Website: https://amirehsanijam.github.io/
 
 Complete source: https://github.com/amirehsanijam/amirehsanijam.github.io
 
-GitHub Pages hosts the frontend. Shared orders remain in the existing Railway service, using SQLite on a persistent `/data` volume. GitHub Pages is static hosting and cannot run the order API or a writable shared database.
+GitHub Pages hosts the frontend. Browser API requests go through https://bonice-order-gateway.onrender.com to reach the existing order API. Shared orders remain in the existing Railway service, using SQLite on a persistent `/data` volume. GitHub Pages is static hosting and cannot run the order API or a writable shared database.
 
 Existing backend: https://bonice-group-production.up.railway.app
 
@@ -37,7 +37,7 @@ The HTML output is `dist/client/index.html`. The same build also preserves the o
 
 The workflow in `.github/workflows/pages.yml` builds, tests, and publishes on pushes to `main`. Set the repository's Pages publishing source to **GitHub Actions**. It discovers the site's base path, so both an account site and a project site work.
 
-The workflow uses the current Railway API by default. To use another backend, set the GitHub repository variable `API_BASE_URL` to its HTTPS origin. On that backend set `ALLOWED_ORIGINS` to the exact Pages origin (for example `https://YOUR-ACCOUNT.github.io`, without a project path). Multiple allowed origins can be comma separated. Unconfigured origins are rejected; order writes still require the private owner token.
+The workflow uses the Render gateway by default. To use another backend, set the GitHub repository variable `API_BASE_URL` to its HTTPS origin. On that backend set `ALLOWED_ORIGINS` to the exact Pages origin (for example `https://YOUR-ACCOUNT.github.io`, without a project path). Multiple allowed origins can be comma separated. Unconfigured origins are rejected; order writes still require the private owner token.
 
 Build-time frontend settings:
 

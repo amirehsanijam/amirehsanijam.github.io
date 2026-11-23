@@ -1,6 +1,6 @@
 # Alternate public order route
 
-Status: implemented and tested locally; not deployed or validated on the user's networks.
+Status: deployed on Render at https://bonice-order-gateway.onrender.com. Health, order reads and browser preflights passed from the user's computer. Validation on their other connections is still required.
 
 This Node service gives the GitHub Pages app an API route on another hosting
 provider. It forwards only order API requests to the existing Railway service;
@@ -36,3 +36,5 @@ the app to it or report the problem as fixed.
 Tests: `node --test tests/gateway.test.mjs` from the repository root. The tests
 cover fixed upstream routing, owner-body preservation, strict CORS, browser write
 preflights and upstream/filter errors. They are not live regional verification.
+
+The active service was created directly through Render with repository-root commands: `node --test tests/gateway.test.mjs && node --check gateway/server.mjs` for build, and `node gateway/server.mjs` for start. It uses Node 24, Frankfurt, the free plan and manual deploys. The root Blueprint is the equivalent gateway-directory configuration for future recreation.

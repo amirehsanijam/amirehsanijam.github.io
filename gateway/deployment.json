@@ -1,0 +1,10 @@
+{
+  "workspaceId": "tea-dc231as9v7es73c4iv6g",
+  "serviceId": "srv-dc23283l550s73fvmi7g",
+  "deployId": "dep-dc2328rl550s73fvmml0",
+  "url": "https://bonice-order-gateway.onrender.com",
+  "region": "frankfurt",
+  "plan": "free",
+  "sourceCommit": "5f9e2792d6d5cedeb6e1116011e3c9c6ea1a47db",
+  "autoDeploy": false
+}
