@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: bonice-order-gateway
+    runtime: node
+    plan: free
+    rootDir: gateway
+    buildCommand: node --check server.mjs && node --check proxy.mjs
+    startCommand: node server.mjs
+    healthCheckPath: /health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
