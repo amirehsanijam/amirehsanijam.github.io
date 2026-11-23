@@ -1,0 +1,47 @@
+name: Diagnose Iranian connectivity
+on:
+  push:
+    paths: [.github/workflows/iran-connectivity.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check public frontend and API from external and Iranian networks
+        shell: python
+        run: |
+          import json, urllib.request, urllib.parse, time
+          def get(url):
+              request = urllib.request.Request(url, headers={'Accept':'application/json','User-Agent':'Bonice-network-diagnostics'})
+              with urllib.request.urlopen(request, timeout=40) as response:
+                  return json.load(response)
+          api='https://bonice-group-production.up.railway.app/api/orders'
+          try:
+              request=urllib.request.Request(api,headers={'Origin':'https://amirehsanijam.github.io'})
+              with urllib.request.urlopen(request,timeout=40) as response:
+                  data=json.load(response)
+                  print(json.dumps({'external_api_status':response.status,'content_type':response.headers.get('content-type'),'cors':response.headers.get('access-control-allow-origin'),'valid_orders_response':isinstance(data.get('orders'),list)}))
+          except Exception as error:
+              print('External API check failed: '+str(error))
+          try:
+              nodes=get('https://check-host.net/nodes/hosts')['nodes']
+              selected=[name for name,node in nodes.items() if node['location'][0]=='ir'][:3]
+              selected += [name for name,node in nodes.items() if node['location'][0]=='de'][:1]
+              if not any(nodes[n]['location'][0]=='ir' for n in selected):
+                  raise RuntimeError('No Iranian probes available')
+              for target in ['https://amirehsanijam.github.io/','https://bonice-group-production.up.railway.app/']:
+                  query=urllib.parse.urlencode([('host',target)]+[('node',n) for n in selected])
+                  check=get('https://check-host.net/check-http?'+query)
+                  print(json.dumps({'target':target,'request':check}))
+                  request_id=check['request_id']
+                  result={}
+                  for attempt in range(12):
+                      time.sleep(5)
+                      result=get('https://check-host.net/check-result/'+request_id)
+                      if result and all(value is not None for value in result.values()): break
+                  print(json.dumps({'target':target,'results':result}))
+          except Exception as error:
+              print('Regional probe check failed: '+str(error))
