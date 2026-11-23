@@ -1,6 +1,6 @@
 # Alternate public order route
 
-Status: deployed on Render at https://bonice-order-gateway.onrender.com. Health, order reads and browser preflights passed from the user's computer. Validation on their other connections is still required.
+Status: deployed on Render at https://bonice-order-gateway.onrender.com and used by the published GitHub Pages app. On 2026-11-23, health, reads and preflights passed from the user's computer. Public-page create/edit/delete passed with a temporary order; cleanup left both existing orders exactly unchanged. Three Iranian probes returned 204 with correct CORS for the write preflight. Validation on the user's office, home and mobile connections remains pending; these checks do not establish universal Iranian availability.
 
 This Node service gives the GitHub Pages app an API route on another hosting
 provider. It forwards only order API requests to the existing Railway service;
@@ -19,7 +19,7 @@ The service root directory is `gateway`, the start command is `node server.mjs`,
 and the health check is `/health`. That health endpoint reports process liveness;
 it does not establish upstream database or regional availability.
 
-Before changing `API_BASE_URL` in the GitHub Pages repository:
+Rollout checks, including the remaining actual-network confirmation:
 
 1. Verify the deployed gateway's GET returns the existing order records, without
    printing or exporting ownership keys.
