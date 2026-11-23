@@ -31,9 +31,9 @@ jobs:
               request=urllib.request.Request(url,data=payload,headers={'Content-Type':'application/json','User-Agent':'Bonice-network-diagnostics'})
               with urllib.request.urlopen(request,timeout=40) as response:
                   return json.load(response)
-          for target in ['amirehsanijam.github.io','bonice-group-production.up.railway.app']:
+          for target in ['bonice-group-production.up.railway.app']:
               try:
-                  created=request_json('https://api.globalping.io/v1/measurements',{'type':'http','target':target,'locations':[{'country':'IR'}],'limit':3,'measurementOptions':{'protocol':'HTTPS','request':{'method':'HEAD','path':'/'}}})
+                  created=request_json('https://api.globalping.io/v1/measurements',{'type':'http','target':target,'locations':[{'country':'IR'}],'limit':3,'measurementOptions':{'protocol':'HTTPS','request':{'method':'OPTIONS','path':'/api/orders','headers':{'Origin':'https://amirehsanijam.github.io','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type'}}}})
                   print(json.dumps({'target':target,'measurement':created}))
                   result={}
                   for attempt in range(12):
