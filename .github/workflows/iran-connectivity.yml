@@ -26,22 +26,21 @@ jobs:
                   print(json.dumps({'external_api_status':response.status,'content_type':response.headers.get('content-type'),'cors':response.headers.get('access-control-allow-origin'),'valid_orders_response':isinstance(data.get('orders'),list)}))
           except Exception as error:
               print('External API check failed: '+str(error))
-          try:
-              nodes=get('https://check-host.net/nodes/hosts')['nodes']
-              selected=[name for name,node in nodes.items() if node['location'][0]=='ir'][:3]
-              selected += [name for name,node in nodes.items() if node['location'][0]=='de'][:1]
-              if not any(nodes[n]['location'][0]=='ir' for n in selected):
-                  raise RuntimeError('No Iranian probes available')
-              for target in ['https://amirehsanijam.github.io/','https://bonice-group-production.up.railway.app/']:
-                  query=urllib.parse.urlencode([('host',target)]+[('node',n) for n in selected])
-                  check=get('https://check-host.net/check-http?'+query)
-                  print(json.dumps({'target':target,'request':check}))
-                  request_id=check['request_id']
+          def request_json(url, body=None):
+              payload=None if body is None else json.dumps(body).encode()
+              request=urllib.request.Request(url,data=payload,headers={'Content-Type':'application/json','User-Agent':'Bonice-network-diagnostics'})
+              with urllib.request.urlopen(request,timeout=40) as response:
+                  return json.load(response)
+          for target in ['amirehsanijam.github.io','bonice-group-production.up.railway.app']:
+              try:
+                  created=request_json('https://api.globalping.io/v1/measurements',{'type':'http','target':target,'locations':[{'country':'IR'}],'limit':3,'measurementOptions':{'protocol':'HTTPS','request':{'method':'HEAD','path':'/'}}})
+                  print(json.dumps({'target':target,'measurement':created}))
                   result={}
                   for attempt in range(12):
                       time.sleep(5)
-                      result=get('https://check-host.net/check-result/'+request_id)
-                      if result and all(value is not None for value in result.values()): break
-                  print(json.dumps({'target':target,'results':result}))
-          except Exception as error:
-              print('Regional probe check failed: '+str(error))
+                      result=request_json('https://api.globalping.io/v1/measurements/'+created['id'])
+                      if result.get('status')!='in-progress': break
+                  print(json.dumps({'target':target,'iran_results':result}))
+              except Exception as error:
+                  print('Regional measurement failed for '+target+': '+str(error))
+                  raise
