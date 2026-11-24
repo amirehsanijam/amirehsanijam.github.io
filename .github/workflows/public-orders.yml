@@ -1,0 +1,21 @@
+name: Verify public order operations
+on:
+  push:
+    paths: [.github/workflows/public-orders.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-order-verification
+  cancel-in-progress: false
+jobs:
+  orders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Verify create, edit, owner protection and cleanup
+        run: node scripts/check-public-orders.mjs
