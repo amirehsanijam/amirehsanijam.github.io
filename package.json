@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "test": "node --test tests/*.test.mjs",
-    "build:railway": "node scripts/build-railway.mjs"
+    "build:railway": "node scripts/build-railway.mjs",
+    "build:arvan": "VITE_API_BASE_URL='' VITE_PUBLIC_SITE_URL='' npm run build && node scripts/build-arvan.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "5.0.4",
