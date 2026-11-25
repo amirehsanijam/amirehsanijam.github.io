@@ -31,3 +31,23 @@ try {
   assert.deepEqual(sort(after.body.orders), sort(before.body.orders), 'Existing orders remain unchanged');
   console.log(JSON.stringify({ testOrderRemoved: true, existingOrdersUnchanged: true }));
 }
+
+const group=crypto.randomUUID(),admin=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
+const prefix='/api/groups/'+group+'/orders';
+assert.equal((await call('POST','/api/groups',{id:group,adminToken:admin,title:'Group role verification'})).status,200);
+const customer={...fixture,id:crypto.randomUUID()};
+try{
+ assert.equal((await call('POST',prefix,customer)).status,200);
+ assert.equal((await call('DELETE',prefix+'/'+customer.id,{token:'0'.repeat(64)})).status,403);
+ assert.equal((await call('DELETE',prefix,{token:customer.token})).status,403);
+ assert.equal((await call('POST',prefix,{...customer,token:'0'.repeat(64),adminToken:admin,note:'Admin edited'})).status,200);
+ assert.equal((await call('GET',prefix)).body.orders[0].note,'Admin edited');
+ assert.equal((await call('POST',prefix,{...customer,note:'Owner retained'})).status,200);
+ assert.equal((await call('DELETE',prefix+'/'+customer.id,{adminToken:admin})).status,200);
+ assert.equal((await call('POST',prefix,{...customer,id:crypto.randomUUID()})).status,200);
+}finally{
+ assert.equal((await call('DELETE',prefix,{adminToken:admin})).status,200);
+ assert.equal((await call('GET',prefix)).body.orders.length,0);
+ const after=await call('GET');assert.deepEqual(after.body.orders,before.body.orders,'Legacy orders preserved through group reset');
+}
+console.log(JSON.stringify({groupCreator:true,customerOwnership:true,adminEditDeleteReset:true,legacyOrdersUnchanged:true}));

@@ -1,7 +1,7 @@
 name: Verify public order operations
 on:
   push:
-    paths: [.github/workflows/public-orders.yml]
+    paths: [.github/workflows/public-orders.yml, scripts/check-public-orders.mjs]
   workflow_dispatch:
 permissions:
   contents: read

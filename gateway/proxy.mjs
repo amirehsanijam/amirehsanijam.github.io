@@ -10,7 +10,7 @@ export async function proxy(request, fetchUpstream = fetch) {
   if (origin && origin !== pagesOrigin) return json({ error: 'درخواست معتبر نیست.' }, 403);
   if (origin) headers['access-control-allow-origin'] = origin;
   if (url.pathname === '/health' && request.method === 'GET') return json({ ok: true, storage: 'upstream' }, 200);
-  if (!route.test(url.pathname) || url.search) return json({ error: 'مسیر معتبر نیست.' }, 404);
+  if (!(route.test(url.pathname) || /^\/api\/groups(?:\/[a-f0-9-]{36}(?:\/(?:admin|orders)(?:\/[a-f0-9-]{36})?)?)?$/.test(url.pathname)) || url.search) return json({ error: 'مسیر معتبر نیست.' }, 404);
   if (request.method === 'OPTIONS') {
     const requested = (request.headers.get('access-control-request-headers') || '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
     if (!origin || !methods.includes(request.headers.get('access-control-request-method')) || requested.some(x => x !== 'content-type')) return json({ error: 'درخواست معتبر نیست.' }, 403);

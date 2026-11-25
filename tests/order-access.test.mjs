@@ -40,3 +40,8 @@ test('unrelated, incomplete and malformed fragments cannot import order access',
   assert.throws(() => managementLink('javascript:alert(1)', id, token));
   assert.throws(() => managementLink('https://orders.example', id, 'wrong'));
 });
+
+test('customer invite preserves group identity and strips private admin capabilities',()=>{
+ const g='90c5a3fb-889f-4dc3-b4a6-4da5a4f6b3dc';
+ assert.equal(pageLink('https://order.test/?group='+g+'&other=value#admin='+ 'a'.repeat(64)),'https://order.test/?group='+g);
+});

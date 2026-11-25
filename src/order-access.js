@@ -10,7 +10,8 @@ export function parseManagementLink(fragment) {
 export function pageLink(address) {
   const url = new URL(address);
   if (!['https:', 'http:'].includes(url.protocol)) throw new Error('Invalid page URL');
-  url.search = '';
+  const group=url.searchParams.get('group');
+  url.search = group&&new RegExp('^'+id+'$','i').test(group)?'?group='+group:'';
   url.hash = '';
   if (url.pathname.endsWith('/index.html')) url.pathname = url.pathname.slice(0, -10);
   return url.href;

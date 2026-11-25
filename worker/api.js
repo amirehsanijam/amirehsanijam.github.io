@@ -26,9 +26,14 @@ function validate(body) {
 }
 export async function api(request, env) {
   const url = new URL(request.url);
-  const isCollection = url.pathname === '/api/orders';
-  const match = url.pathname.match(/^\/api\/orders\/([a-f0-9-]+)$/i);
-  if (!isCollection && !match) return null;
+  const groupMatch=url.pathname.match(/^\/api\/groups\/([a-f0-9-]+)(?:\/(orders|admin)(?:\/([a-f0-9-]+))?)?$/i);
+  const creatingGroup=url.pathname==='/api/groups';
+  const groupId=groupMatch?.[1]||'legacy';
+  if(groupMatch&&!uuid.test(groupId))return new Response('{}',{status:404,headers});
+  const route=groupMatch?'/api/'+(groupMatch[2]||'orders')+(groupMatch[3]?'/'+groupMatch[3]:''):url.pathname;
+  const isCollection = route === '/api/orders';
+  const match = route.match(/^\/api\/orders\/([a-f0-9-]+)$/i);
+  if (!isCollection && !match && !creatingGroup && route!=='/api/admin') return null;
   const origin = request.headers.get('origin');
   const allowed = new Set([url.origin, ...(env.ALLOWED_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean)]);
   const responseHeaders = { ...headers, vary: 'Origin' };
@@ -43,9 +48,14 @@ export async function api(request, env) {
   }
   if (!env.DB) return json({ error: 'فضای ذخیره سفارش‌ها در دسترس نیست. کمی بعد دوباره تلاش کنید.' }, 503);
   try {
+    let group=null;
+    if(groupId!=='legacy'){
+      group=(await env.DB.prepare('SELECT id,title,admin_hash FROM ordering_groups WHERE id=?').bind(groupId).all()).results[0];
+      if(!group)return json({error:'گروه پیدا نشد.'},404);
+    }
     if (request.method === 'GET' && isCollection) {
-      const { results } = await env.DB.prepare("SELECT id, name, note, items_json, total, created_at, updated_at FROM order_entries WHERE status = 'active' ORDER BY created_at DESC").all();
-      return json({ orders: results.map(({ items_json, ...row }) => ({ ...row, items: JSON.parse(items_json) })) });
+      const { results } = await env.DB.prepare("SELECT id, name, note, items_json, total, created_at, updated_at FROM order_entries WHERE status = 'active' AND group_id = ? ORDER BY created_at DESC").bind(groupId).all();
+      return json({ group:group?{id:group.id,title:group.title}:null, orders: results.map(({ items_json, ...row }) => ({ ...row, items: JSON.parse(items_json) })) });
     }
     if (!['POST', 'DELETE'].includes(request.method) || (match && request.method !== 'DELETE')) return json({ error: 'درخواست پشتیبانی نمی‌شود.' }, 405);
     if (!request.headers.get('content-type')?.includes('application/json')) return json({ error: 'درخواست معتبر نیست.' }, 415);
@@ -54,16 +64,32 @@ export async function api(request, env) {
     let body;
     try { body = JSON.parse(text); } catch { return json({ error: 'اطلاعات سفارش معتبر نیست.' }, 400); }
     if (!body || typeof body !== 'object') return json({ error: 'اطلاعات سفارش معتبر نیست.' }, 400);
+    if(creatingGroup){
+      if(request.method!=='POST'||!uuid.test(body.id)||!/^[a-f0-9]{64}$/.test(body.adminToken))return json({error:'درخواست معتبر نیست.'},400);
+      const title=clean(body.title||'سفارش گروهی بن آیس',100),digest=await hash(body.adminToken);
+      await env.DB.prepare('INSERT INTO ordering_groups(id,title,admin_hash) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING').bind(body.id,title,digest).run();
+      const saved=(await env.DB.prepare('SELECT admin_hash FROM ordering_groups WHERE id=?').bind(body.id).all()).results[0];
+      if(saved.admin_hash!==digest)return json({error:'دسترسی مدیر معتبر نیست.'},403);
+      return json({ok:true,id:body.id});
+    }
+    const admin=Boolean(group&&/^[a-f0-9]{64}$/.test(body.adminToken||'')&&await hash(body.adminToken)===group.admin_hash);
+    if(body.adminToken&&!admin)return json({error:'دسترسی مدیر معتبر نیست.'},403);
+    if(route==='/api/admin')return admin&&request.method==='POST'?json({ok:true}):json({error:'فقط مدیر گروه دسترسی دارد.'},403);
+    if(request.method==='DELETE'&&isCollection){
+      if(!admin)return json({error:'فقط مدیر گروه می‌تواند سفارش‌ها را پاک کند.'},403);
+      await env.DB.prepare("UPDATE order_entries SET status='cancelled',updated_at=? WHERE group_id=? AND status='active'").bind(new Date().toISOString(),groupId).run();
+      return json({ok:true});
+    }
     if (request.method === 'DELETE') {
-      if (!match || !uuid.test(match[1]) || !/^[a-f0-9]{64}$/.test(body.token)) return json({ error: 'شناسه معتبر نیست.' }, 400);
-      const result = await env.DB.prepare("UPDATE order_entries SET status = 'cancelled', updated_at = ? WHERE id = ? AND token_hash = ? AND status = 'active'").bind(new Date().toISOString(), match[1], await hash(body.token)).run();
+      if (!match || !uuid.test(match[1]) || (!admin&&!/^[a-f0-9]{64}$/.test(body.token))) return json({ error: 'شناسه معتبر نیست.' }, 400);
+      const result = await env.DB.prepare("UPDATE order_entries SET status = 'cancelled', updated_at = ? WHERE id = ? AND group_id = ? AND (token_hash = ? OR ? = 1) AND status = 'active'").bind(new Date().toISOString(), match[1], groupId, await hash(body.token||''),admin?1:0).run();
       if (!result.meta.changes) return json({ error: 'سفارش پیدا نشد یا اجازه لغو آن را ندارید.' }, 403);
       return json({ ok: true });
     }
     let order;
     try { order = validate(body); } catch (error) { return json({ error: error.message }, 400); }
     const now = new Date().toISOString(), tokenHash = await hash(order.token);
-    const result = await env.DB.prepare("INSERT INTO order_entries (id, token_hash, name, note, items_json, total, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, note=excluded.note, items_json=excluded.items_json, total=excluded.total, updated_at=excluded.updated_at, status='active' WHERE order_entries.token_hash=excluded.token_hash AND order_entries.status='active'").bind(order.id, tokenHash, order.name, order.note, JSON.stringify(order.items), order.total, now, now).run();
+    const result = await env.DB.prepare("INSERT INTO order_entries (id, token_hash, name, note, items_json, total, created_at, updated_at, group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, note=excluded.note, items_json=excluded.items_json, total=excluded.total, updated_at=excluded.updated_at, status='active' WHERE (order_entries.token_hash=excluded.token_hash OR ? = 1) AND order_entries.status='active' AND order_entries.group_id=excluded.group_id").bind(order.id, tokenHash, order.name, order.note, JSON.stringify(order.items), order.total, now, now,groupId,admin?1:0).run();
     if (!result.meta.changes) return json({ error: 'امکان تغییر این سفارش وجود ندارد؛ ممکن است حذف شده باشد.' }, 403);
     return json({ ok: true, id: order.id, total: order.total });
   } catch (error) {

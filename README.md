@@ -65,3 +65,9 @@ npm run build:railway
 Deploy the complete `railway/function.ts` through Railway. It requires `ORDER_DATA_DIRECTORY=/data`, an attached persistent volume at `/data`, and the configured `ALLOWED_ORIGINS` for a separate frontend. The generator enforces Railway's 96 KiB source limit. Keep one replica for this SQLite database.
 
 `Dockerfile` is an alternative Node deployment; run the build before building the container. Local and production databases are initialized only when the schema is absent. Redeploys must reuse the existing volume; do not restore old test snapshots over live orders.
+
+## Group administration
+
+Click «ایجاد گروه جدید» to become that group's admin. «کپی لینک گروه» shares the customer invite. Save «کپی لینک خصوصی مدیر» privately for admin access from another browser; anyone holding that private link can administer the group. Customers can view all orders and manage only their own, using the original browser or their private order-management link. Admins can add an order for a person, edit/remove any order in the group, and confirm a reset of that group. Reset soft-cancels the current orders; the invite continues to work for new orders.
+
+The existing ungrouped orders remain in the legacy group. SQLite runtimes apply an additive group migration at startup. For a future D1 deployment, apply `drizzle/0001_groups.sql` after `0000_group_orders.sql`.

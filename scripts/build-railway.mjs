@@ -1,8 +1,10 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
 import { brotliCompressSync, constants } from 'node:zlib';
 const pack=file=>brotliCompressSync(readFileSync(file),{params:{[constants.BROTLI_PARAM_QUALITY]:11}}).toString('base64');
-const html=pack('dist/client/index.html'), menu=pack('src/menu.json');
+const html=pack('dist/client/index.html'), menu=brotliCompressSync(Buffer.from(JSON.stringify({items:JSON.parse(readFileSync('src/menu.json','utf8')).items.map(({id,title,price})=>({id,title,price}))})),{params:{[constants.BROTLI_PARAM_QUALITY]:11}}).toString('base64');
 let api=readFileSync('worker/api.js','utf8').replace(/^import menu[^\n]+\n/,'').replace('export async function api','async function api');
+api=transformSync(api,{minifyWhitespace:true,minifySyntax:true,minifyIdentifiers:true,target:'esnext',charset:'utf8'}).code;
 const schema=readFileSync('drizzle/0000_group_orders.sql','utf8');
 const code=`import { Database } from 'bun:sqlite';
 import { mkdirSync } from 'node:fs';
@@ -15,6 +17,8 @@ mkdirSync(data,{recursive:true});
 const db=new Database(data+'/orders.sqlite');
 db.exec('PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;');
 if(!db.query("SELECT name FROM sqlite_master WHERE name='order_entries'").get())db.exec(${JSON.stringify(schema)});
+db.exec('CREATE TABLE IF NOT EXISTS ordering_groups(id TEXT PRIMARY KEY,title TEXT NOT NULL,admin_hash TEXT NOT NULL)');
+if(!db.query('PRAGMA table_info(order_entries)').all().some(c=>c.name==='group_id'))db.exec("ALTER TABLE order_entries ADD COLUMN group_id TEXT NOT NULL DEFAULT 'legacy'");
 const env={ALLOWED_ORIGINS:Bun.env.ALLOWED_ORIGINS,DB:{prepare(sql){let args=[];const q={bind(...values){args=values;return q},async all(){return{results:db.query(sql).all(...args)}},async run(){return{meta:{changes:Number(db.query(sql).run(...args).changes)}}}};return q}}};
 ${api}
 export default { port:Number(Bun.env.PORT||3000),hostname:'0.0.0.0',async fetch(request){

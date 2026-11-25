@@ -3,6 +3,8 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { api } from '../worker/api.js';
 
 export function makeDB(db) {
+  db.exec('CREATE TABLE IF NOT EXISTS ordering_groups(id TEXT PRIMARY KEY,title TEXT NOT NULL,admin_hash TEXT NOT NULL)');
+  if(!db.prepare('PRAGMA table_info(order_entries)').all().some(c=>c.name==='group_id'))db.exec("ALTER TABLE order_entries ADD COLUMN group_id TEXT NOT NULL DEFAULT 'legacy'");
   return { prepare(sql) {
     let args = [];
     const statement = {
