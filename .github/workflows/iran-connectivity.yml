@@ -18,6 +18,12 @@ jobs:
               request = urllib.request.Request(url, headers={'Accept':'application/json','User-Agent':'Bonice-network-diagnostics'})
               with urllib.request.urlopen(request, timeout=40) as response:
                   return json.load(response)
+          try:
+              with urllib.request.urlopen('https://amirehsanijam.github.io/',timeout=40) as response:
+                  html=response.read()
+                  print(json.dumps({'external_frontend_status':response.status,'bytes':len(html),'built_app':len(html)>100000}))
+          except Exception as error:
+              print('External frontend check failed: '+str(error))
           api='https://bonice-order-gateway.onrender.com/api/orders'
           try:
               request=urllib.request.Request(api,headers={'Origin':'https://amirehsanijam.github.io'})
@@ -31,16 +37,16 @@ jobs:
               request=urllib.request.Request(url,data=payload,headers={'Content-Type':'application/json','User-Agent':'Bonice-network-diagnostics'})
               with urllib.request.urlopen(request,timeout=40) as response:
                   return json.load(response)
-          for target in ['bonice-order-gateway.onrender.com']:
+          for target in ['amirehsanijam.github.io','bonice-order-gateway.onrender.com']:
               try:
-                  created=request_json('https://api.globalping.io/v1/measurements',{'type':'http','target':target,'locations':[{'country':'IR'}],'limit':3,'measurementOptions':{'protocol':'HTTPS','request':{'method':'OPTIONS','path':'/api/orders','headers':{'Origin':'https://amirehsanijam.github.io','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type'}}}})
+                  created=request_json('https://api.globalping.io/v1/measurements',{'type':'http','target':target,'locations':[{'country':'IR'}],'limit':3,'measurementOptions':{'protocol':'HTTPS','request':{'method':'HEAD' if target.endswith('github.io') else 'OPTIONS','path':'/' if target.endswith('github.io') else '/api/orders','headers':{'Origin':'https://amirehsanijam.github.io','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type'}}}})
                   print(json.dumps({'target':target,'measurement':created}))
                   result={}
                   for attempt in range(12):
                       time.sleep(5)
                       result=request_json('https://api.globalping.io/v1/measurements/'+created['id'])
                       if result.get('status')!='in-progress': break
-                  print(json.dumps({'target':target,'iran_results':result}))
+                  print(json.dumps({'target':target,'measurement_id':created['id'],'status':result.get('status'),'iran_results':[{'network':x['probe']['network'],'country':x['probe']['country'],'status':x['result'].get('statusCode'),'error':x['result'].get('rawOutput') if not x['result'].get('statusCode') else None} for x in result.get('results',[])]}))
               except Exception as error:
                   print('Regional measurement failed for '+target+': '+str(error))
                   raise
